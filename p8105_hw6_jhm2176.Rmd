@@ -38,9 +38,36 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ## Problem 2
 
-The Washington Post has gathered data on homicides in 50 large U.S. cities.
+This problem uses data gathered by the Washington Post on homicides in 50 large U.S. cities.
 
 Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable indicating whether the homicide is solved. Omit cities Dallas, TX; Phoenix, AZ; and Kansas City, MO – these don’t report victim race. Also omit Tulsa, AL – this is a data entry mistake. For this problem, limit your analysis those for whom victim_race is white or black. Be sure that victim_age is numeric.
+
+```{r}
+homicides_hw6 =
+  read_csv("./data/homicide-data.csv") %>% #load data
+  janitor::clean_names() %>% #clean names
+  mutate(city_state = as.factor(str_c(city, state, sep = ", ")), #creates new variable
+         solved = as.logical(ifelse(disposition %in% c("Closed by arrest"), TRUE, FALSE)),
+         reported_date = as.Date(as.character(reported_date),"%Y%m%d"), #date format
+         victim_age = as.numeric(victim_age), #character to double
+         victim_first = str_to_title(victim_first), #fixes all caps
+         victim_last = str_to_title(victim_last), #fixes all caps
+         victim_sex = as.factor(victim_sex), #character to factor
+         victim_race = as.factor(victim_race), #character to factor
+         city = as.factor(city), #character to factor
+         state = as.factor(state)) %>% #character to factor
+  filter(city_state != "Dallas, TX" & city_state != "Phoenix, AZ" & city_state != "Kansas City, MO" & city_state != "Tulsa, AL") %>%
+  filter(victim_race == "White" | victim_race == "Black")
+```
+
+```{r}
+city_homicides =
+  homicides_hw6 %>%
+  group_by(city_state) %>%
+  summarize(n_homicides = n(),
+            n_unsolved = sum(disposition %in% c("Closed without arrest","Open/No arrest")))
+```
+
 
 For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors. Save the output of glm as an R object; apply the broom::tidy to this object; and obtain the estimate and confidence interval of the adjusted odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
 
