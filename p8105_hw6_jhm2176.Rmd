@@ -46,8 +46,8 @@ Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable i
 homicides_hw6 =
   read_csv("./data/homicide-data.csv") %>% #load data
   janitor::clean_names() %>% #clean names
-  mutate(city_state = as.factor(str_c(city, state, sep = ", ")), #creates new variable
-         solved = as.logical(ifelse(disposition %in% c("Closed by arrest"), TRUE, FALSE)),
+  mutate(city_state = as.factor(str_c(city, state, sep = ", ")), #new variable
+         solved = as.logical(ifelse(disposition %in% c("Closed by arrest"), TRUE, FALSE)), #new variable
          reported_date = as.Date(as.character(reported_date),"%Y%m%d"), #date format
          victim_age = as.numeric(victim_age), #character to double
          victim_first = str_to_title(victim_first), #fixes all caps
