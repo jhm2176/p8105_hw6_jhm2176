@@ -7,7 +7,7 @@ output: github_document
 
 ```{r setup, include=FALSE}
 library(tidyverse) #delete unnecessary packages
-library(ggridges)
+library(broom)
 library(patchwork)
 library(readr)
 library(p8105.datasets)
@@ -74,28 +74,28 @@ Save the output of glm as an R object; apply the broom::tidy to this object; and
 
 ```{r}
 fit %>% 
-  broom::tidy()
-
-exp(cbind("Adjusted OR" = coef(fit), confint(fit)))
+  tidy(exponentiate = TRUE, conf.int = TRUE, conf.level = 0.95) %>%
+  filter(term == "victim_sexMale") %>%
+  select(term, "adjusted_OR" = "estimate", "CI_lower" = "conf.low", "CI_upper" = "conf.high")
 ```
 
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. Do this within a “tidy” pipeline, making use of purrr::map, list columns, and unnest as necessary to create a dataframe with estimated ORs and CIs for each city.
 
 ```{r}
-city_glm =
- homicides_hw6 %>% 
+city_glm = #investigate error message
+  homicides_hw6 %>% 
   nest(data = -city_state) %>% 
   mutate(
     models = map(data, ~glm(solved ~ victim_age + victim_sex + victim_race, family = "binomial", data = .x)),
-    exp_results = map(models, broom::tidy, exponentiate = TRUE, conf.int = TRUE, conf.level = 0.95)) %>%
+    exp_results = map(models, tidy, exponentiate = TRUE, conf.int = TRUE, conf.level = 0.95)) %>%
   select(-data, -models) %>% 
   unnest(exp_results) %>%
   filter(term == "victim_sexMale") %>%
-  rename("adjusted_OR" = "estimate", 
+  select(city_state, 
+         term, 
+         "adjusted_OR" = "estimate", 
          "CI_lower" = "conf.low",
-         "CI_upper" = "conf.high") %>%
-  select(city_state, term, adjusted_OR, CI_lower, CI_upper)
-
+         "CI_upper" = "conf.high")
 city_glm
 ```
 
