@@ -88,16 +88,14 @@ city_glm =
   mutate(
     models = map(data, ~glm(solved ~ victim_age + victim_sex + victim_race, family = "binomial", data = .x)),
     results = map(models, broom::tidy),
-    OR = map(models, coef(models), confint(fit)))) %>%
+    exp_results = map(models, broom::tidy, exponentiate = T, conf.int = T, conf.level = 0.95)) %>%
   select(-data, -models) %>% 
-  unnest(results) %>%
+  unnest(results, exp_results) %>%
   filter(term == "victim_sexMale") %>%
-  mutate(OR = exp(estimate)) %>%
-  select(OR, CI_lower, CI_upper)
-  
- mutate(OR = exp(estimate),
-         CI_lower = exp(confint(models))) %>%
-  #knitr::kable(digits = 3)
+  rename("adjusted_OR" = "estimate1", 
+         "CI_lower" = "conf.low",
+         "CI_upper" = "conf.high") %>%
+  select(city_state, term, adjusted_OR, CI_lower, CI_upper)
 
 city_glm
 ```
