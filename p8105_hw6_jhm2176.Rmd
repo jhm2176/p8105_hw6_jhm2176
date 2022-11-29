@@ -48,7 +48,7 @@ homicides_hw6 =
   janitor::clean_names() %>% #clean names
   mutate(city_state = as.factor(str_c(city, state, sep = ", ")), #new variable
          solved = as.logical(ifelse(disposition %in% c("Closed by arrest"), TRUE, FALSE)), #new variable
-         reported_date = as.Date(as.character(reported_date),"%Y%m%d"), #date format
+         reported_date = as.Date(as.character(reported_date),"%Y%m%d"), #fixes date format
          victim_age = as.numeric(victim_age), #character to double
          victim_first = str_to_title(victim_first), #fixes all caps
          victim_last = str_to_title(victim_last), #fixes all caps
@@ -60,16 +60,25 @@ homicides_hw6 =
   filter(victim_race == "White" | victim_race == "Black")
 ```
 
+For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors. 
+
 ```{r}
-city_homicides =
+baltimore =
   homicides_hw6 %>%
-  group_by(city_state) %>%
-  summarize(n_homicides = n(),
-            n_unsolved = sum(disposition %in% c("Closed without arrest","Open/No arrest")))
+  filter(city_state == "Baltimore, MD")
+
+fit = glm(solved ~ victim_age + victim_sex + victim_race, data = baltimore, family = "binomial")
 ```
 
+Save the output of glm as an R object; apply the broom::tidy to this object; and obtain the estimate and confidence interval of the adjusted odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
 
-For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors. Save the output of glm as an R object; apply the broom::tidy to this object; and obtain the estimate and confidence interval of the adjusted odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
+```{r}
+fit %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
+
+exp(cbind(OR = coef(fit), confint(fit)))
+```
 
 Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. Do this within a “tidy” pipeline, making use of purrr::map, list columns, and unnest as necessary to create a dataframe with estimated ORs and CIs for each city.
 
@@ -91,14 +100,4 @@ One using head circumference, length, sex, and all interactions (including the t
 Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 
 Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
-
-
-
-
-
-
-
-
-
-
 
