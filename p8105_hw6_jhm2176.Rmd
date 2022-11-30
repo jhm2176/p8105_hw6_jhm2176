@@ -40,7 +40,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 This problem uses data gathered by the Washington Post on homicides in 50 large U.S. cities.
 
-Create a city_state variable (e.g. “Baltimore, MD”), and a binary variable indicating whether the homicide is solved. Omit cities Dallas, TX; Phoenix, AZ; and Kansas City, MO – these don’t report victim race. Also omit Tulsa, AL – this is a data entry mistake. For this problem, limit your analysis those for whom victim_race is white or black. Be sure that victim_age is numeric.
+First, I will load and tidy the data. The following code uses `mutate` to update variables to appropriate types, convert reported_date into a more readable format (YYY-MM-DD), and correct the capitalization of victim_first and victim_last names. It also creates two new variables: i) a "city_state" variable that returns both city and state (e.g. “Baltimore, MD”), and ii) a binary variable "solved" indicating whether the homicide is solved (TRUE) or not (FALSE). Solved homicides are defined as homicides for which the disposition is "Closed by arrest." `filter` is used to omit homicides in Dallas, TX; Phoenix, AZ; Kansas City, MO; and Tulsa, AL, and to limit our analysis to homicides for whom victim_race is white or black.
 
 ```{r}
 homicides_hw6 =
@@ -60,7 +60,7 @@ homicides_hw6 =
   filter(victim_race == "White" | victim_race == "Black")
 ```
 
-For the city of Baltimore, MD, use the glm function to fit a logistic regression with resolved vs unresolved as the outcome and victim age, sex and race as predictors. 
+Next, I will use the `glm` function to fit a logistic regression with solved vs unsolved as the outcome and victim age, sex and race as predictors for the city of Baltimore, MD.
 
 ```{r}
 baltimore =
@@ -70,19 +70,20 @@ baltimore =
 fit = glm(solved ~ victim_age + victim_sex + victim_race, data = baltimore, family = "binomial")
 ```
 
-Save the output of glm as an R object; apply the broom::tidy to this object; and obtain the estimate and confidence interval of the adjusted odds ratio for solving homicides comparing male victims to female victims keeping all other variables fixed.
+The following code saves the output of my logistic regression model as an R object. `broom::tidy` and `filter` are used to obtain the adjusted odds ratio estimate and confidence interval for solving homicides comparing male victims to female victims, keeping all other variables fixed.
 
 ```{r}
-fit %>% 
+fit_output =
+  fit %>% 
   tidy(exponentiate = TRUE, conf.int = TRUE, conf.level = 0.95) %>%
   filter(term == "victim_sexMale") %>%
   select(term, "adjusted_OR" = "estimate", "CI_lower" = "conf.low", "CI_upper" = "conf.high")
 ```
 
-Now run glm for each of the cities in your dataset, and extract the adjusted odds ratio (and CI) for solving homicides comparing male victims to female victims. Do this within a “tidy” pipeline, making use of purrr::map, list columns, and unnest as necessary to create a dataframe with estimated ORs and CIs for each city.
+Now, I will run `glm` for each of the cities in the homicides_hw6 dataset, and extract the adjusted odds ratio and confidence interval for solving homicides comparing male victims to female victims. The following "tidy" pipeline uses `purrr::map`, `glm`, `broom::tidy`, list columns, and `unnest` to create a dataframe with estimated ORs and CIs for each city. `filter` and `select` are used to select our values of interest.
 
 ```{r}
-city_glm = #investigate error message
+city_glm =
   homicides_hw6 %>% 
   nest(data = -city_state) %>% 
   mutate(
@@ -99,7 +100,7 @@ city_glm = #investigate error message
 city_glm
 ```
 
-Create a plot that shows the estimated ORs and CIs for each city. Organize cities according to estimated OR, and comment on the plot.
+Finally, the following code uses `geom_point` and `geom_errorbar` to create a plot showing the estimated odds ratios and confidence intervals for each city. Cities are arranged in ascending order of estimated OR.
 
 ```{r}
 city_glm %>%
@@ -112,6 +113,9 @@ city_glm %>%
     x = "City",
     y = "Adjusted OR")
 ```
+ 
+ **Comment on plot:** The plot suggests that the odds of homicide resolution for male victims is less than the odds of homicide resolution for female victims in most of our analyzed cities, after adjusting for victim age and race.In other words, after adjusting for victim age and race, homicides are generally more likely to be solved in cases where the victim is a woman compared to cases where the victim is a man. This is true for all cities in our dataset **except** Atlanta, GA; Richmond, VA; Nashville, TN; Fresno, CA; Stockton, CA; and Albuquerque, NM, where OR>=1.
+
 ## Problem 3
 
 In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. This dataset, available here, consists of roughly 4000 children.
