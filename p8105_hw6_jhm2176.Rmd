@@ -233,7 +233,7 @@ birthweight %>%
 Finally, I will compare my selected fit_step model to two other models:
 
 * fit_i using length at birth and gestational age as predictors
-* fit_ii using head circumference, length, sex, and all interactions between these
+* fit_ii using head circumference, length, sex, and all interactions between these as predictors
 
 ```{r comparison models}
 fit_i = lm(bwt ~ blength + gaweeks, data = birthweight)
