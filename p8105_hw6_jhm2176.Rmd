@@ -40,7 +40,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 This problem uses data gathered by the Washington Post on homicides in 50 large U.S. cities.
 
-First, I will load and tidy the data. The following code uses `mutate` to update variables to appropriate types, convert reported_date into a more readable format (YYY-MM-DD), and correct the capitalization of victim_first and victim_last names. It also creates two new variables: i) a "city_state" variable that returns both city and state (e.g. “Baltimore, MD”), and ii) a binary variable "solved" indicating whether the homicide is solved (TRUE) or not (FALSE). Solved homicides are defined as homicides for which the disposition is "Closed by arrest." `filter` is used to omit homicides in Dallas, TX; Phoenix, AZ; Kansas City, MO; and Tulsa, AL, and to limit our analysis to homicides for whom victim_race is white or black.
+First, I will load and tidy the data. The following code uses `mutate` to update variables to appropriate types, convert reported_date into a more readable format (YYY-MM-DD), and correct the capitalization of victim_first and victim_last. It also creates two new variables: i) a `city_state` variable that returns both city and state (e.g. “Baltimore, MD”), and ii) a binary variable `solved` indicating whether the homicide is solved (TRUE) or not (FALSE). Solved homicides are defined as homicides for which the disposition is "Closed by arrest." `filter` is used to omit homicides in Dallas, TX; Phoenix, AZ; Kansas City, MO; and Tulsa, AL, and to limit our analysis to homicides for which victim_race is white or Black.
 
 ```{r}
 homicides_hw6 =
@@ -78,6 +78,8 @@ fit_output =
   tidy(exponentiate = TRUE, conf.int = TRUE, conf.level = 0.95) %>%
   filter(term == "victim_sexMale") %>%
   select(term, "adjusted_OR" = "estimate", "CI_lower" = "conf.low", "CI_upper" = "conf.high")
+
+fit_output
 ```
 
 Now, I will run `glm` for each of the cities in the homicides_hw6 dataset, and extract the adjusted odds ratio and confidence interval for solving homicides comparing male victims to female victims. The following "tidy" pipeline uses `purrr::map`, `glm`, `broom::tidy`, list columns, and `unnest` to create a dataframe with estimated ORs and CIs for each city. `filter` and `select` are used to select our values of interest.
@@ -114,7 +116,7 @@ city_glm %>%
     y = "Adjusted OR")
 ```
  
- **Comment on plot:** The plot suggests that the odds of homicide resolution for male victims is less than the odds of homicide resolution for female victims in most of our analyzed cities, after adjusting for victim age and race.In other words, after adjusting for victim age and race, homicides are generally more likely to be solved in cases where the victim is a woman compared to cases where the victim is a man. This is true for all cities in our dataset **except** Atlanta, GA; Richmond, VA; Nashville, TN; Fresno, CA; Stockton, CA; and Albuquerque, NM, where OR>=1.
+ **Comment:** The plot suggests that the odds of homicide resolution for male victims is less than the odds of homicide resolution for female victims in most of our analyzed cities, in general, after adjusting for victim age and race.In other words, after adjusting for victim age and race, homicides are generally more likely to be solved in cases where the victim is a woman compared to cases where the victim is a man. This is true for all cities in our dataset **except** Atlanta, GA; Richmond, VA; Nashville, TN; Fresno, CA; Stockton, CA; and Albuquerque, NM, where the adjusted OR >= 1, which indicates that the odds of homicide resolution for male victims is equal to or greater than the odds of homicide resolution for female victims in these cities.
 
 ## Problem 3
 
