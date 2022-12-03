@@ -8,7 +8,6 @@ output: github_document
 ```{r setup, include=FALSE} 
 library(tidyverse) #used
 library(broom) #used
-library(patchwork)
 library(readr) #used
 library(p8105.datasets) #delete unnecessary packages
 library(mgcv)
@@ -136,14 +135,43 @@ colSums(is.na(birthweight)) #check for missing data: none missing
 lapply(birthweight, unique) #check for unusual values: menarche = 0 (1 row)
 ```
 
-Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. Describe your modeling process and show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. Describe your modeling process.
+
+```{r modeling}
+fit_step = step(lm(bwt ~ ., birthweight), direction = "both", trace = FALSE)
+tidy(fit_step)
+```
+
+Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+
+```{r residuals plot}
+birthweight %>%
+  modelr::add_residuals(fit_step) %>%
+  modelr::add_predictions(fit_step) %>%
+  ggplot(aes(x = pred, y = resid)) + 
+  geom_point() +
+  geom_hline(yintercept = 0,linetype = "dashed")
+```
+
 
 Compare your model to two others:
 
 * One using length at birth and gestational age as predictors (main effects only)
 * One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
 
+```{r}
+fit_i = lm(bwt ~ blength + gaweeks, data = birthweight)
+fit_ii = lm(bwt ~ bhead + blength + babysex + bhead*blength*babysex, data = birthweight)
+
+tidy(fit_i)
+tidy(fit_ii)
+```
+
 Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+
+
+
+
 
 Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
 
