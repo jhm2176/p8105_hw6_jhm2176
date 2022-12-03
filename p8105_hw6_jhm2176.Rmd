@@ -9,11 +9,10 @@ output: github_document
 library(tidyverse) #used
 library(broom) #used
 library(readr) #used
-library(p8105.datasets) #delete unnecessary packages
 library(mgcv)
 library(modelr)
 
-library(viridis)
+library(viridis) #used
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -119,10 +118,11 @@ city_glm %>%
 
 ## Problem 3
 
-In this problem, you will analyze data gathered to understand the effects of several variables on a child’s birthweight. This dataset, available here, consists of roughly 4000 children.
+This problem uses data gathered to understand the effects of several variables on a child’s birthweight. This dataset includes information on roughly 4000 children.
 
-Load and clean the data for regression analysis (i.e. convert numeric to factor where appropriate, check for missing data, etc.).
-```{r}
+First, I will load and clean the data for regression analysis. `mutate` is used to convert babysex, frace, malform, and mrace from numeric variables to factor variables. `is.na` and `unique` are used to check for missing and unusual data. There is no missing data, but one observation where menarche is 0. Because our menarche variable represents the mother’s age at menarche (years), a result of 0 is unusual. 
+
+```{r results='hide'}
 birthweight =
   read_csv("./data/birthweight.csv") %>% #load data
   janitor::clean_names() %>%
@@ -132,12 +132,12 @@ birthweight =
          mrace = as.factor(mrace))
 
 colSums(is.na(birthweight)) #check for missing data: none missing
-lapply(birthweight, unique) #check for unusual values: menarche = 0 (1 row)
+lapply(birthweight, unique) #check for unusual values: menarche = 0, 1 observation
 ```
 
 Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. Describe your modeling process.
 
-```{r modeling}
+```{r fit model}
 fit_step = step(lm(bwt ~ ., birthweight), direction = "both", trace = FALSE)
 tidy(fit_step)
 ```
@@ -159,9 +159,9 @@ Compare your model to two others:
 * One using length at birth and gestational age as predictors (main effects only)
 * One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
 
-```{r}
+```{r comparison models}
 fit_i = lm(bwt ~ blength + gaweeks, data = birthweight)
-fit_ii = lm(bwt ~ bhead + blength + babysex + bhead*blength*babysex, data = birthweight)
+fit_ii = lm(bwt ~ bhead + blength + babysex + bhead * blength * babysex, data = birthweight)
 
 tidy(fit_i)
 tidy(fit_ii)
@@ -169,9 +169,43 @@ tidy(fit_ii)
 
 Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
 
+```{r}
+cv_df = 
+  crossv_mc(birthweight, 100) %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble),
+  )
 
+cv_df = 
+  cv_df %>% 
+  mutate(
+    step_fits = map(.x = train, ~lm(bwt ~ babysex + bhead + blength + delwt + fincome + 
+                gaweeks + mheight + mrace + parity + ppwt + smoken, data = .x)),
+    i_fits =  map(.x = train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    ii_fits = map(.x = train, ~lm(bwt ~ bhead + blength + babysex + bhead * blength * babysex, data = .x))
+  ) %>% 
+  mutate(
+    rmse_step = map2_dbl(.x = step_fits, .y = test, ~rmse(model = .x, data = .y)),
+    rmse_i =    map2_dbl(.x = i_fits,    .y = test, ~rmse(model = .x, data = .y)),
+    rmse_ii = map2_dbl(.x = ii_fits, .y = test, ~rmse(model = .x, data = .y))
+  )
+```
 
+```{r}
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model",
+    values_to = "rmse",
+    names_prefix = "rmse_"
+  ) %>% 
+  ggplot(aes(x = model, y = rmse)) +
+  geom_boxplot()
+```
 
+*Comment:*
 
 Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
 
