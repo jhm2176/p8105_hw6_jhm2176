@@ -33,7 +33,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ## Problem 1
 
-This problem uses 2017 Central Park weather data.
+This problem uses 2017 Central Park weather data and solutions from the course website.
 
 ### Data
 
@@ -88,7 +88,8 @@ weather_df %>%
   mutate(log_b0b1 = log(beta0 * beta1)) %>% 
   ggplot(aes(x = log_b0b1)) + geom_density()
 ```
-As with $r^2$, this distribution is somewhat skewed and has some outliers. 
+
+As with  $\hat{r}^2$, this distribution is somewhat skewed and has some outliers. 
 
 ## Problem 2
 
@@ -223,6 +224,8 @@ birthweight %>%
   ggplot(aes(x = pred, y = resid)) + 
   geom_point() +
   geom_hline(yintercept = 0,linetype = "dashed")
+
+#plot(fit_step) used to verify
 ```
 
 ### Model Comparison
