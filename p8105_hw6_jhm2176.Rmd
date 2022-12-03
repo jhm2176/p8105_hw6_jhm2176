@@ -100,7 +100,7 @@ city_glm =
 city_glm
 ```
 
-Finally, the following code uses `geom_point` and `geom_errorbar` to create a plot showing the estimated odds ratios and confidence intervals for each city. Cities are arranged in ascending order of estimated OR.
+Finally, the following code uses `geom_point` and `geom_errorbar` to create a plot showing the estimated adjusted odds ratios and confidence intervals for each city. Cities are arranged in ascending order of estimated OR.
 
 ```{r}
 city_glm %>%
@@ -114,11 +114,13 @@ city_glm %>%
     y = "Adjusted OR")
 ```
  
- **Comment:** The plot suggests that the odds of homicide resolution for male victims is less than the odds of homicide resolution for female victims in most of our analyzed cities, in general, after adjusting for victim age and race.In other words, after adjusting for victim age and race, homicides are generally more likely to be solved in cases where the victim is a woman compared to cases where the victim is a man. This is true for all cities in our dataset **except** Atlanta, GA; Richmond, VA; Nashville, TN; Fresno, CA; Stockton, CA; and Albuquerque, NM, where the adjusted OR >= 1, which indicates that the odds of homicide resolution for male victims is equal to or greater than the odds of homicide resolution for female victims in these cities.
+ **Comment:** The plot suggests that the odds of homicide resolution for male victims is less than the odds of homicide resolution for female victims in most of our analyzed cities, in general, after adjusting for victim age and race. In other words, after adjusting for victim age and race, homicides are generally more likely to be solved in cases where the victim is a woman compared to cases where the victim is a man. This is true for all cities in our dataset **except** Atlanta, GA; Richmond, VA; Nashville, TN; Fresno, CA; Stockton, CA; and Albuquerque, NM, where the adjusted OR >= 1, indicating that the odds of homicide resolution for male victims is equal to or greater than the odds of homicide resolution for female victims in these cities.
 
 ## Problem 3
 
 This problem uses data gathered to understand the effects of several variables on a child’s birthweight. This dataset includes information on roughly 4000 children.
+
+### Data
 
 First, I will load and clean the data for regression analysis. `mutate` is used to convert babysex, frace, malform, and mrace from numeric variables to factor variables. `is.na` and `unique` are used to check for missing and unusual data. 
 
@@ -135,7 +137,7 @@ colSums(is.na(birthweight)) #check for missing data: none missing
 lapply(birthweight, unique) #check for unusual values: menarche = 0, 1 observation
 ```
 
-No missing data was identified. There is one observation where menarche is 0, which is unexpected, because our menarche variable represents the mother’s age at menarche (years). I will make note of this but refrain from changing the data.
+No missing data was identified. There is one observation where menarche = 0, which is unexpected, because our menarche variable represents the mother’s age at menarche (years). I will make note of this but refrain from changing the data.
 
 Next, I will fit a regression model for birthweight using `step` and `lm` to preform the stepwise model selection procedure by AIC.
 
@@ -144,9 +146,11 @@ fit_step = step(lm(bwt ~ ., birthweight), direction = "both", trace = FALSE)
 
 tidy(fit_step)
 ```
-My selected model is `r format(formula(fit_step))`  This model was selected using stepwise selection by AIC, a data-driven model-building process. Stepwise selection is a combination of forward and backwards model selection, during which 
+This model was selected using stepwise selection by AIC, a data-driven model-building process. Stepwise selection is a combination of forward and backwards model selection, during which variables are removed from and entered into the model in a way that leads to the best improvement in AIC (smallest AIC). The resulting model is `r format(formula(fit_step))`.
 
-Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
+### Residual vs Fits Plot
+
+The following code uses `add_predictions` and `add_residuals` to create a plot of model residuals against fitted values.
 
 ```{r residuals plot}
 birthweight %>%
@@ -157,11 +161,12 @@ birthweight %>%
   geom_hline(yintercept = 0,linetype = "dashed")
 ```
 
+### Model Comparison
 
-Compare your model to two others:
+Finally, I will compare my selected fit_step model to two other models:
 
-* One using length at birth and gestational age as predictors (main effects only)
-* One using head circumference, length, sex, and all interactions (including the three-way interaction) between these
+* fit_i using length at birth and gestational age as predictors
+* fit_ii using head circumference, length, sex, and all interactions between these
 
 ```{r comparison models}
 fit_i = lm(bwt ~ blength + gaweeks, data = birthweight)
@@ -171,7 +176,7 @@ tidy(fit_i)
 tidy(fit_ii)
 ```
 
-Make this comparison in terms of the cross-validated prediction error; use crossv_mc and functions in purrr as appropriate.
+The following code uses `crossv_mc`, `mutate`, and `map` functions in `purrr` to compare the cross-validated prediction errors of fit_step, fit_i, and fit_ii. It does so by generating training and testing datasets, fitting the three models to assess prediction accuracy, and obtaining RMSEs for each model.
 
 ```{r}
 cv_df = 
@@ -196,6 +201,8 @@ cv_df =
   )
 ```
 
+The following code creates a plot showing the distribution of RMSE values for each model:
+
 ```{r}
 cv_df %>% 
   select(starts_with("rmse")) %>% 
@@ -209,7 +216,4 @@ cv_df %>%
   geom_boxplot()
 ```
 
-*Comment:*
-
-Note that although we expect your model to be reasonable, model building itself is not a main idea of the course and we don’t necessarily expect your model to be “optimal”.
-
+*Comment:* Based on this plot, the fit_step model is the best fit for our data. Compared to the other two models, fit_step has the lowest RMSE values, on average.
