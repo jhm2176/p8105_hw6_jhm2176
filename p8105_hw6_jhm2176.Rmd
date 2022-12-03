@@ -120,7 +120,7 @@ city_glm %>%
 
 This problem uses data gathered to understand the effects of several variables on a child’s birthweight. This dataset includes information on roughly 4000 children.
 
-First, I will load and clean the data for regression analysis. `mutate` is used to convert babysex, frace, malform, and mrace from numeric variables to factor variables. `is.na` and `unique` are used to check for missing and unusual data. There is no missing data, but one observation where menarche is 0. Because our menarche variable represents the mother’s age at menarche (years), a result of 0 is unusual. 
+First, I will load and clean the data for regression analysis. `mutate` is used to convert babysex, frace, malform, and mrace from numeric variables to factor variables. `is.na` and `unique` are used to check for missing and unusual data. 
 
 ```{r results='hide'}
 birthweight =
@@ -135,12 +135,16 @@ colSums(is.na(birthweight)) #check for missing data: none missing
 lapply(birthweight, unique) #check for unusual values: menarche = 0, 1 observation
 ```
 
-Propose a regression model for birthweight. This model may be based on a hypothesized structure for the factors that underly birthweight, on a data-driven model-building process, or a combination of the two. Describe your modeling process.
+No missing data was identified. There is one observation where menarche is 0, which is unexpected, because our menarche variable represents the mother’s age at menarche (years). I will make note of this but refrain from changing the data.
+
+Next, I will fit a regression model for birthweight using `step` and `lm` to preform the stepwise model selection procedure by AIC.
 
 ```{r fit model}
 fit_step = step(lm(bwt ~ ., birthweight), direction = "both", trace = FALSE)
+
 tidy(fit_step)
 ```
+My selected model is `r format(formula(fit_step))`  This model was selected using stepwise selection by AIC, a data-driven model-building process. Stepwise selection is a combination of forward and backwards model selection, during which 
 
 Show a plot of model residuals against fitted values – use add_predictions and add_residuals in making this plot.
 
