@@ -41,7 +41,7 @@ This problem uses data gathered by the Washington Post on homicides in 50 large 
 First, I will load and tidy the data. The following code uses `mutate` to update variables to appropriate types, convert reported_date into a more readable format (YYY-MM-DD), and correct the capitalization of victim_first and victim_last. It also creates two new variables: i) a `city_state` variable that returns both city and state (e.g. “Baltimore, MD”), and ii) a binary variable `solved` indicating whether the homicide is solved (TRUE) or not (FALSE). Solved homicides are defined as homicides for which the disposition is "Closed by arrest." `filter` is used to omit homicides in Dallas, TX; Phoenix, AZ; Kansas City, MO; and Tulsa, AL, and to limit our analysis to homicides for which victim_race is white or Black.
 
 ```{r}
-homicides_hw6 =
+homicides =
   read_csv("./data/homicide-data.csv") %>% #load data
   janitor::clean_names() %>% #clean names
   mutate(city_state = as.factor(str_c(city, state, sep = ", ")), #new variable
@@ -62,13 +62,13 @@ Next, I will use the `glm` function to fit a logistic regression with solved vs 
 
 ```{r}
 baltimore =
-  homicides_hw6 %>%
+  homicides %>%
   filter(city_state == "Baltimore, MD")
 
 fit = glm(solved ~ victim_age + victim_sex + victim_race, data = baltimore, family = "binomial")
 ```
 
-The following code saves the output of my logistic regression model as an R object. `broom::tidy` and `filter` are used to obtain the adjusted odds ratio estimate and confidence interval for solving homicides comparing male victims to female victims, keeping all other variables fixed.
+The following code saves the output of my logistic regression model as an R object. `tidy` and `filter` are used to obtain the adjusted odds ratio estimate and confidence interval for solving homicides comparing male victims to female victims, keeping all other variables fixed.
 
 ```{r}
 fit_output =
@@ -80,11 +80,11 @@ fit_output =
 fit_output
 ```
 
-Now, I will run `glm` for each of the cities in the homicides_hw6 dataset, and extract the adjusted odds ratio and confidence interval for solving homicides comparing male victims to female victims. The following "tidy" pipeline uses `purrr::map`, `glm`, `broom::tidy`, list columns, and `unnest` to create a dataframe with estimated ORs and CIs for each city. `filter` and `select` are used to select our values of interest.
+Now, I will run `glm` for each of the cities in the homicides dataset, and extract the adjusted odds ratio and confidence interval for solving homicides comparing male victims to female victims. The following "tidy" pipeline uses `purrr::map`, `glm`, `broom::tidy`, list columns, and `unnest` to create a dataframe with estimated ORs and CIs for each city. `filter` and `select` are used to select our values of interest.
 
 ```{r}
 city_glm =
-  homicides_hw6 %>% 
+  homicides %>% 
   nest(data = -city_state) %>% 
   mutate(
     models = map(data, ~glm(solved ~ victim_age + victim_sex + victim_race, family = "binomial", data = .x)),
